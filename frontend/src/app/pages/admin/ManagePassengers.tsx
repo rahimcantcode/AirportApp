@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Divider, Field, SectionTitle } from '../../components/ui';
+import { Button, DashboardCard, Field, PageHeader } from '../../components/ui';
 import { isEmailValid, isLuggageIdValid, isPhoneValid, isTicketValid } from '../../utils/validation';
 
 export function ManagePassengers() {
@@ -67,9 +67,10 @@ export function ManagePassengers() {
   };
 
   return (
-    <div>
-      <SectionTitle title="Manage Passengers" subtitle="Add passengers and assign flights" />
+    <div className="page-stack">
+      <PageHeader title="Manage Passengers" subtitle="Add passengers and assign flights" />
 
+      <DashboardCard title="Manage Passengers" subtitle="Add passengers and review boarding status">
       <form className="form" onSubmit={onAdd}>
         <div className="grid grid--2">
           <Field label="Full name" error={errors.fullName}>
@@ -98,12 +99,10 @@ export function ManagePassengers() {
             </select>
           </Field>
           <div className="row row--end" style={{ alignItems: 'end' }}>
-            <button className="btn" type="submit">Add passenger</button>
+            <Button type="submit">Add passenger</Button>
           </div>
         </div>
       </form>
-
-      <Divider />
 
       <div className="table">
         <div className="table__header">
@@ -130,6 +129,7 @@ export function ManagePassengers() {
           );
         })}
       </div>
+      </DashboardCard>
     </div>
   );
 }

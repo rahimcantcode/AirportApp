@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Divider, Field, SectionTitle } from '../../components/ui';
+import { Button, DashboardCard, Field, PageHeader } from '../../components/ui';
 import { isAirlineFlightNoValid } from '../../utils/validation';
 
 export function ManageFlights() {
@@ -52,54 +52,51 @@ export function ManageFlights() {
   };
 
   return (
-    <div>
-      <SectionTitle title="Manage Flights" subtitle="Add and view flights" />
+    <div className="page-stack">
+      <PageHeader title="Manage Flights" subtitle="Add flights and manage departure details" />
 
-      <form className="form" onSubmit={onAdd}>
-        <div className="grid grid--2">
-          <Field label="Airline flight number" error={errors.airlineFlightNo}>
-            <input className="input" value={airlineFlightNo} onChange={(e) => setAirlineFlightNo(e.target.value)} placeholder="AA1234" />
-          </Field>
-          <Field label="Gate" error={errors.gate}>
-            <input className="input" value={gate} onChange={(e) => setGate(e.target.value)} placeholder="A12" />
-          </Field>
-          <Field label="Origin" error={errors.origin}>
-            <input className="input" value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="DFW" />
-          </Field>
-          <Field label="Destination" error={errors.destination}>
-            <input className="input" value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="LAX" />
-          </Field>
-          <Field label="Departure time" error={errors.departureTime}>
-            <input className="input" type="datetime-local" value={departureTime} onChange={(e) => setDepartureTime(e.target.value)} />
-          </Field>
-          <div className="row row--end" style={{ alignItems: 'end' }}>
-            <button className="btn" type="submit">Add flight</button>
+      <DashboardCard title="Flights" subtitle="Active schedule">
+        <div className="table">
+          <div className="table__header table__header--flights">
+            <div>Flight</div><div>Route</div><div>Departure</div><div>Gate</div><div>Actions</div>
           </div>
-        </div>
-      </form>
-
-      <Divider />
-
-      <div className="table">
-        <div className="table__header">
-          <div>Flight</div>
-          <div>Route</div>
-          <div>Departure</div>
-          <div>Gate</div>
-          <div></div>
-        </div>
-        {flights.map((f) => (
-          <div key={f.id} className="table__row">
-            <div>{f.airlineFlightNo}</div>
-            <div>{f.origin} → {f.destination}</div>
-            <div>{new Date(f.departureTime).toLocaleString()}</div>
-            <div>{f.gate}</div>
-            <div className="row row--end">
-              <button className="btn btn--danger" onClick={() => removeFlight(f.id)} type="button">Remove</button>
+          {flights.map((f) => (
+            <div key={f.id} className="table__row table__row--flights">
+              <div>{f.airlineFlightNo}</div>
+              <div>{f.origin} → {f.destination}</div>
+              <div>{new Date(f.departureTime).toLocaleString()}</div>
+              <div>{f.gate}</div>
+              <div className="row row--end action-group">
+                <Button variant="secondary" type="button" onClick={() => addToast({ type: 'info', title: 'Flight details', message: `${f.airlineFlightNo} ${f.origin}→${f.destination}` })}>Details</Button>
+                <Button variant="danger" onClick={() => removeFlight(f.id)} type="button">Remove</Button>
+              </div>
             </div>
+          ))}
+        </div>
+      </DashboardCard>
+
+      <DashboardCard title="Create Flight" subtitle="Enter route and departure details">
+        <form className="form" onSubmit={onAdd}>
+          <div className="grid grid--2 grouped-fields">
+            <Field label="Airline code + Flight number" error={errors.airlineFlightNo}>
+              <input className="input" value={airlineFlightNo} onChange={(e) => setAirlineFlightNo(e.target.value)} placeholder="AA1234" />
+            </Field>
+            <Field label="Gate" error={errors.gate}>
+              <input className="input" value={gate} onChange={(e) => setGate(e.target.value)} placeholder="A12" />
+            </Field>
+            <Field label="Origin" error={errors.origin}>
+              <input className="input" value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder="DFW" />
+            </Field>
+            <Field label="Destination" error={errors.destination}>
+              <input className="input" value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="LAX" />
+            </Field>
+            <Field label="Departure time" error={errors.departureTime}>
+              <input className="input" type="datetime-local" value={departureTime} onChange={(e) => setDepartureTime(e.target.value)} />
+            </Field>
           </div>
-        ))}
-      </div>
+          <div className="row row--end"><Button type="submit">Add flight</Button></div>
+        </form>
+      </DashboardCard>
     </div>
   );
 }
