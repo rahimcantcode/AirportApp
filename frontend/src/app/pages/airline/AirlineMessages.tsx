@@ -3,7 +3,7 @@ import { useApp } from '@/app/context/AppContext';
 import { AlertTriangle, Inbox, CheckCircle2, Trash2, UserX } from 'lucide-react';
 
 export function AirlineMessages() {
-  const { currentUser, messages, bags, passengers, removeBag, removePassenger, markMessageRead, addMessage } = useApp();
+  const { currentUser, messages, bags, passengers, removeBag, removeBagsByPassenger, markMessageRead, addMessage } = useApp();
 
   const boardMessages = useMemo(() => {
     return messages
@@ -24,19 +24,19 @@ export function AirlineMessages() {
     removeBag(bag.id);
   };
 
-  const handleRemovePassenger = (passengerId?: string) => {
+  const requestAdminRemoval = (passengerId?: string, ticketNumber?: string, bagId?: string) => {
     if (!passengerId) return;
-    removePassenger(passengerId);
-  };
+    const ok = window.confirm('Remove all bags for this passenger and request admin passenger removal?');
+    if (!ok) return;
 
-  const requestAdminRemoval = (passengerId?: string, ticketNumber?: string) => {
-    if (!passengerId) return;
+    removeBagsByPassenger(passengerId);
     addMessage({
       board: 'admin',
       subject: 'Removal request from airline staff',
-      content: `Request to remove passenger from system.`,
+      content: `Security violation flow completed: all bags removed for passenger. Requesting admin removal.`,
       passengerId,
       ticketNumber,
+      bagId,
       severity: 'warning',
       read: false,
     });
@@ -105,23 +105,12 @@ export function AirlineMessages() {
                       </button>
 
                       <button
-                        onClick={() => requestAdminRemoval(m.passengerId, m.ticketNumber)}
+                        onClick={() => requestAdminRemoval(m.passengerId, m.ticketNumber, m.bagId)}
                         className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-100 text-gray-800"
                       >
                         <UserX className="w-4 h-4" />
-                        Inform admin to remove passenger
+                        Remove bags + inform admin
                       </button>
-
-                      {m.passengerId && (
-                        <button
-                          onClick={() => handleRemovePassenger(m.passengerId)}
-                          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-900 text-white hover:bg-gray-800"
-                          title="For demo only"
-                        >
-                          <UserX className="w-4 h-4" />
-                          Remove passenger now (demo)
-                        </button>
-                      )}
                     </div>
                   )}
                 </div>

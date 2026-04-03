@@ -4,6 +4,8 @@ import { ShieldCheck, ArrowRight, AlertTriangle } from 'lucide-react';
 
 export function UpdateBags() {
   const { groundMode, setGroundMode, bags, updateBag, addMessage, flights, passengers, showBanner } = useApp();
+  const [bagIdInput, setBagIdInput] = React.useState('');
+  const [statusInput, setStatusInput] = React.useState<'check-in-counter' | 'security-check' | 'gate' | 'loaded'>('security-check');
 
   const inboundBags = useMemo(() => {
     return bags
@@ -85,6 +87,43 @@ export function UpdateBags() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="mb-6 border border-gray-200 rounded-xl p-4 bg-gray-50">
+          <h3 className="font-semibold text-gray-900 mb-2">Direct Bag Update by Bag ID</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <input
+              value={bagIdInput}
+              onChange={e => setBagIdInput(e.target.value)}
+              className="px-3 py-2 border rounded-lg"
+              placeholder="Enter bag ID"
+            />
+            <select
+              value={statusInput}
+              onChange={e => setStatusInput(e.target.value as any)}
+              className="px-3 py-2 border rounded-lg"
+            >
+              <option value="check-in-counter">check-in-counter</option>
+              <option value="security-check">security-check</option>
+              <option value="gate">gate</option>
+              <option value="loaded">loaded</option>
+            </select>
+            <button
+              onClick={() => {
+                const bag = bags.find(b => b.bagId === bagIdInput.trim());
+                if (!bag) {
+                  showBanner('Bag ID not found', 'error');
+                  return;
+                }
+                const detail = statusInput === 'gate' || statusInput === 'loaded' ? bag.gate : statusInput === 'security-check' ? 'Security Check' : bag.locationDetail;
+                updateBag({ ...bag, location: statusInput, locationDetail: detail });
+                showBanner(`Bag ${bag.bagId} updated to ${statusInput}`, 'success');
+              }}
+              className="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800"
+            >
+              Update by ID
+            </button>
+          </div>
+        </div>
+
         {inboundBags.length === 0 ? (
           <div className="text-center py-10 text-gray-600">
             <ShieldCheck className="w-10 h-10 text-gray-400 mx-auto mb-3" />

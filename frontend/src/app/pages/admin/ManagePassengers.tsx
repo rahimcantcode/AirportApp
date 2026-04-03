@@ -15,6 +15,7 @@ export function ManagePassengers() {
     flightId: '',
     identificationNumber: '',
   });
+  const [manualRemoveId, setManualRemoveId] = useState('');
 
   const handleAdd = () => {
     if (!formData.name || !formData.ticketNumber || !formData.flightId || !formData.identificationNumber) {
@@ -95,6 +96,30 @@ export function ManagePassengers() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-6 bg-white rounded-lg shadow border border-gray-200 p-4">
+        <h2 className="font-semibold text-gray-900 mb-2">Remove by Ticket Number or Passenger ID</h2>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            value={manualRemoveId}
+            onChange={(e) => setManualRemoveId(e.target.value)}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
+            placeholder="Enter ticket number or passenger ID"
+          />
+          <button
+            onClick={() => {
+              if (!manualRemoveId.trim()) return;
+              const ok = window.confirm(`Remove passenger ${manualRemoveId.trim()} and related bags?`);
+              if (!ok) return;
+              removePassenger(manualRemoveId.trim());
+              setManualRemoveId('');
+            }}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Remove
+          </button>
+        </div>
       </div>
 
       {/* Add Passenger Dialog */}

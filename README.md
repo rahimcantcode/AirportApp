@@ -18,14 +18,37 @@ From the project root:
 npm install
 ```
 
-### 2) Start backend
+### 2) Configure Supabase
+
+1. Create a Supabase project.
+2. In Supabase SQL editor, run:
+   - `backend/supabase/schema.sql`
+   - `backend/supabase/seed.sql` (optional sample data)
+   Notes:
+   - ERD core tables are implemented directly.
+   - UI-only fields are in extension tables: `staff_credentials`, `message_meta`, `bag_meta`.
+3. Add env files:
+
+`backend/.env`:
+```bash
+PORT=3001
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
+```
+
+`frontend/.env`:
+```bash
+VITE_API_BASE_URL=http://localhost:3001
+```
+
+### 3) Start backend
 
 ```bash
 cd backend
 npm run dev
 ```
 
-### 3) Start frontend
+### 4) Start frontend
 
 In another terminal:
 
@@ -36,7 +59,6 @@ npm run dev
 
 ## Notes
 
-- Staff credentials are auto generated and emailed in a simulated way (logged in console).
+- Staff credentials are auto generated and saved in `login_credentials` (demo mode).
 - Ground staff must choose a posting mode (Security Clearance or Gate Ops) before acting.
 - Gate staff must select a gate and can only work one gate at a time.
-

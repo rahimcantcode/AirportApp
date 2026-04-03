@@ -129,6 +129,12 @@ export function Layout({ children }: LayoutProps) {
           <div className="mb-3 px-4 py-2">
             <p className="text-sm font-medium text-gray-900">{currentUser.username}</p>
           </div>
+          <a
+            href="#password-reset"
+            className="mb-2 w-full flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
+          >
+            <span>Change Password</span>
+          </a>
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"

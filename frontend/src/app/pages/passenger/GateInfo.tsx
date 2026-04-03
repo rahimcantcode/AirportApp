@@ -4,9 +4,13 @@ import { Plane, MapPin, Clock } from 'lucide-react';
 
 export function GateInfo() {
   const { currentUser, passengers, flights } = useApp();
+  const [gateLookup, setGateLookup] = React.useState('');
 
   const passenger = passengers.find(p => p.id === currentUser?.id);
   const flight = passenger ? flights.find(f => f.id === passenger.flightId) : null;
+  const gateFlights = gateLookup
+    ? flights.filter(f => f.gate.toUpperCase() === gateLookup.trim().toUpperCase())
+    : [];
 
   return (
     <div className="p-8">
@@ -113,6 +117,31 @@ export function GateInfo() {
           </div>
         </div>
       )}
+
+      <div className="mt-6 bg-white rounded-lg shadow border border-gray-200 p-6">
+        <h2 className="font-semibold text-gray-900 mb-3">Lookup by Gate Number</h2>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            value={gateLookup}
+            onChange={(e) => setGateLookup(e.target.value)}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
+            placeholder="Enter gate (e.g., T1-G23)"
+          />
+        </div>
+        {gateLookup && (
+          <div className="mt-4 space-y-2">
+            {gateFlights.map(gf => (
+              <div key={gf.id} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                <p className="font-medium text-gray-900">{gf.id} • {gf.airlineCode} {gf.flightNumber}</p>
+                <p className="text-sm text-gray-600">Destination: {gf.destination} • Status: {gf.status}</p>
+              </div>
+            ))}
+            {gateFlights.length === 0 && (
+              <p className="text-sm text-gray-600">No flights found for this gate number.</p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

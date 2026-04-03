@@ -59,6 +59,7 @@ function Router() {
 
   // Route mapping
   const routes: Record<string, React.ReactNode> = {
+    'password-reset': <PasswordResetPage />,
     // Admin
     'admin-dashboard': <AdminDashboard />,
     'admin-flights': <ManageFlights />,

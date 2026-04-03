@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useApp, UserRole, Staff } from '@/app/context/AppContext';
 import { Plane } from 'lucide-react';
+import { api } from '@/app/lib/api';
 
 export function LoginPage() {
-  const { setCurrentUser, staff, passengers, showBanner } = useApp();
+  const { setCurrentUser, passengers, showBanner } = useApp();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole>(null);
@@ -11,7 +12,7 @@ export function LoginPage() {
   const [passengerIdNumber, setPassengerIdNumber] = useState('');
   const [passengerTicketNumber, setPassengerTicketNumber] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!username || !password) {
@@ -19,41 +20,30 @@ export function LoginPage() {
       return;
     }
 
-    // Check admin login
-    if (username === 'admin' && password === 'admin') {
-      setCurrentUser({
-        id: '0',
-        username: 'admin',
-        role: 'admin',
-      });
-      window.location.hash = 'admin-dashboard';
-      return;
-    }
-
-    // Check staff login
-    const foundStaff = staff.find(s => s.username === username && s.password === password);
-    if (foundStaff) {
-      setCurrentUser({
-        id: foundStaff.id,
-        username: foundStaff.username,
-        role: foundStaff.role,
-        airline: foundStaff.airline,
-      });
-      
-      // Redirect to appropriate dashboard
+    try {
+      const user = await api.staffLogin(username, password);
+      if (user.mustChangePassword) {
+        sessionStorage.setItem('password_reset_username', user.username);
+        sessionStorage.setItem('password_reset_required', '1');
+        window.location.hash = 'password-reset';
+        showBanner('Password change required before continuing', 'error');
+        return;
+      }
+      setCurrentUser(user);
       const dashboardMap: Record<string, string> = {
+        admin: 'admin-dashboard',
         'airline-staff': 'airline-dashboard',
         'gate-staff': 'gate-dashboard',
         'ground-staff': 'ground-dashboard',
       };
-      window.location.hash = dashboardMap[foundStaff.role];
-      return;
+      window.location.hash = dashboardMap[user.role] || 'admin-dashboard';
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Login failed';
+      showBanner(message.includes('Invalid credentials') ? 'Invalid username or password' : message, 'error');
     }
-
-    showBanner('Invalid username or password', 'error');
   };
 
-  const handlePassengerLogin = (e: React.FormEvent) => {
+  const handlePassengerLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!passengerIdNumber || !passengerTicketNumber) {
@@ -61,19 +51,25 @@ export function LoginPage() {
       return;
     }
 
-    const foundPassenger = passengers.find(
-      p => p.identificationNumber === passengerIdNumber && p.ticketNumber === passengerTicketNumber
-    );
-
-    if (foundPassenger) {
-      setCurrentUser({
-        id: foundPassenger.id,
-        username: foundPassenger.name,
-        role: 'passenger',
-      });
+    try {
+      const user = await api.passengerLogin(passengerIdNumber, passengerTicketNumber);
+      setCurrentUser(user);
       window.location.hash = 'passenger-track';
-    } else {
-      showBanner('Invalid identification or ticket number', 'error');
+    } catch {
+      const foundPassenger = passengers.find(
+        p => p.identificationNumber === passengerIdNumber && p.ticketNumber === passengerTicketNumber
+      );
+
+      if (foundPassenger) {
+        setCurrentUser({
+          id: foundPassenger.id,
+          username: foundPassenger.name,
+          role: 'passenger',
+        });
+        window.location.hash = 'passenger-track';
+      } else {
+        showBanner('Invalid identification or ticket number', 'error');
+      }
     }
   };
 
@@ -288,7 +284,9 @@ export function LoginPage() {
           <p className="text-xs text-gray-600">
             <strong>Demo Credentials:</strong><br />
             Admin: admin / admin<br />
-            Staff: alice_aa / pass123
+            Airline: al01 / Passw1<br />
+            Gate: bg02 / Passw1<br />
+            Ground: cg03 / Passw1
           </p>
         </div>
       </div>

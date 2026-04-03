@@ -3,7 +3,7 @@ import { useApp } from '@/app/context/AppContext';
 import { PlaneTakeoff, Send } from 'lucide-react';
 
 export function FlightDeparture() {
-  const { currentUser, flights, selectedGate, addMessage, showBanner } = useApp();
+  const { currentUser, flights, passengers, bags, selectedGate, addMessage, showBanner } = useApp();
   const [note, setNote] = useState('');
 
   const selectedFlight = useMemo(() => {
@@ -13,6 +13,20 @@ export function FlightDeparture() {
 
   const informAdmin = () => {
     if (!selectedFlight) return;
+    const flightPassengers = passengers.filter((p) => p.flightId === selectedFlight.id);
+    const notBoarded = flightPassengers.find((p) => p.status !== 'boarded');
+    if (notBoarded) {
+      showBanner('All passengers must be boarded before reporting departure', 'error');
+      return;
+    }
+
+    const flightBags = bags.filter((b) => b.flightId === selectedFlight.id);
+    const notLoaded = flightBags.find((b) => b.location !== 'loaded');
+    if (notLoaded) {
+      showBanner('All bags must be loaded before reporting departure', 'error');
+      return;
+    }
+
     addMessage({
       board: 'admin',
       subject: 'Flight departure reported',

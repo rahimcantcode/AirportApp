@@ -1,14 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApp, BagLocation } from '@/app/context/AppContext';
-import { Search, Luggage, Plus, CheckCircle2 } from 'lucide-react';
+import { Search, Luggage, Plus, CheckCircle2, Trash2 } from 'lucide-react';
 import { Dialog } from '@/app/components/Dialog';
+import { api } from '@/app/lib/api';
 
 export function CheckInPassenger() {
-  const { passengers, updatePassenger, flights, addBag, bags, currentUser, showBanner } = useApp();
+  const { passengers, updatePassenger, flights, addBag, removeBag, bags, currentUser, showBanner } = useApp();
 
   const [ticket, setTicket] = useState('');
   const [showBagDialog, setShowBagDialog] = useState(false);
   const [bagForm, setBagForm] = useState({ bagId: '', counter: 'T1-C05' });
+  const [bagLookupId, setBagLookupId] = useState('');
+  const [bagLookupResult, setBagLookupResult] = useState<any | null>(null);
 
   useEffect(() => {
     const saved = sessionStorage.getItem('airline:lastTicket');
@@ -84,6 +87,38 @@ export function CheckInPassenger() {
 
     setShowBagDialog(false);
     showBanner('Bag registered at check-in counter', 'success');
+  };
+
+  const lookupBagById = async () => {
+    const bagId = bagLookupId.trim();
+    if (!bagId) {
+      showBanner('Enter a bag ID', 'error');
+      return;
+    }
+
+    try {
+      const bag = await api.getBagById(bagId);
+      const flight = flights.find(f => f.id === bag.flightId);
+      if (!flight || flight.airlineCode !== currentUser?.airline) {
+        showBanner('Bag not found under your airline', 'error');
+        setBagLookupResult(null);
+        return;
+      }
+      setBagLookupResult(bag);
+      showBanner('Bag loaded', 'success');
+    } catch (error) {
+      setBagLookupResult(null);
+      showBanner(error instanceof Error ? error.message : 'Bag not found', 'error');
+    }
+  };
+
+  const handleRemoveBagById = () => {
+    if (!bagLookupResult) return;
+    const ok = window.confirm(`Remove bag ${bagLookupResult.bagId}?`);
+    if (!ok) return;
+    removeBag(bagLookupResult.id);
+    setBagLookupResult(null);
+    setBagLookupId('');
   };
 
   return (
@@ -165,6 +200,46 @@ export function CheckInPassenger() {
                 )}
               </div>
             </div>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 className="font-semibold text-gray-900 mb-3">Bag Lookup by Bag ID</h2>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            value={bagLookupId}
+            onChange={e => setBagLookupId(e.target.value)}
+            className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+            placeholder="Enter bag ID"
+          />
+          <button
+            onClick={lookupBagById}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800"
+          >
+            <Search className="w-4 h-4" />
+            Retrieve Bag
+          </button>
+        </div>
+
+        {bagLookupResult && (
+          <div className="mt-4 border border-gray-200 rounded-xl p-4 bg-gray-50 flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-gray-900">Bag {bagLookupResult.bagId}</p>
+              <p className="text-sm text-gray-600 mt-1">
+                Ticket {bagLookupResult.ticketNumber} • Flight {bagLookupResult.flightId}
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                Location: {bagLookupResult.location}{bagLookupResult.locationDetail ? ` • ${bagLookupResult.locationDetail}` : ''}
+              </p>
+            </div>
+            <button
+              onClick={handleRemoveBagById}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="w-4 h-4" />
+              Remove Bag
+            </button>
           </div>
         )}
       </div>

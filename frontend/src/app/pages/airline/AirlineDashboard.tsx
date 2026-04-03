@@ -1,10 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '@/app/context/AppContext';
 import { Plane, Search, ArrowRight } from 'lucide-react';
+import { api } from '@/app/lib/api';
 
 export function AirlineDashboard() {
   const { currentUser, flights, passengers, bags, showBanner } = useApp();
   const [ticket, setTicket] = useState('');
+  const [flightIdQuery, setFlightIdQuery] = useState('');
+  const [flightLookup, setFlightLookup] = useState<{ flight: any; passengers: any[] } | null>(null);
 
   useEffect(() => {
     const saved = sessionStorage.getItem('airline:lastTicket');
@@ -42,6 +45,28 @@ export function AirlineDashboard() {
       return;
     }
     showBanner('Passenger found. Continue to check-in.', 'success');
+  };
+
+  const handleFlightIdLookup = async () => {
+    const flightId = flightIdQuery.trim().toUpperCase();
+    if (!flightId) {
+      showBanner('Enter a flight ID', 'error');
+      return;
+    }
+
+    try {
+      const flight = await api.getFlightById(flightId);
+      if (flight.airlineCode !== currentUser?.airline) {
+        showBanner('Flight is not under your airline', 'error');
+        return;
+      }
+      const flightPassengers = await api.getPassengersByFlightId(flightId);
+      setFlightLookup({ flight, passengers: flightPassengers });
+      showBanner('Flight details loaded', 'success');
+    } catch (error) {
+      setFlightLookup(null);
+      showBanner(error instanceof Error ? error.message : 'Failed to load flight', 'error');
+    }
   };
 
   return (
@@ -90,6 +115,49 @@ export function AirlineDashboard() {
                 Go to Check-in
                 <ArrowRight className="w-4 h-4" />
               </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <h2 className="font-semibold text-gray-900 mb-3">Flight Lookup by Flight ID</h2>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            value={flightIdQuery}
+            onChange={e => setFlightIdQuery(e.target.value)}
+            className="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+            placeholder="Enter flight ID (e.g., AA0108)"
+          />
+          <button
+            onClick={handleFlightIdLookup}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800"
+          >
+            <Search className="w-4 h-4" />
+            Retrieve
+          </button>
+        </div>
+
+        {flightLookup && (
+          <div className="mt-4 border border-gray-200 rounded-xl p-4 bg-gray-50">
+            <p className="font-semibold text-gray-900">
+              {flightLookup.flight.id} • {flightLookup.flight.airlineCode} {flightLookup.flight.flightNumber}
+            </p>
+            <p className="text-sm text-gray-600 mt-1">
+              Destination: {flightLookup.flight.destination} • Gate: {flightLookup.flight.gate} • Status: {flightLookup.flight.status}
+            </p>
+            <p className="text-sm text-gray-700 mt-3 font-medium">Passengers ({flightLookup.passengers.length})</p>
+            <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+              {flightLookup.passengers.map(p => (
+                <div key={p.id} className="border border-gray-200 rounded-lg p-3 bg-white text-sm">
+                  <p className="font-medium text-gray-900">{p.name}</p>
+                  <p className="text-gray-600">Ticket: {p.ticketNumber}</p>
+                  <p className="text-gray-600">Status: {p.status}</p>
+                </div>
+              ))}
+              {flightLookup.passengers.length === 0 && (
+                <p className="text-sm text-gray-600">No passengers on this flight.</p>
+              )}
             </div>
           </div>
         )}

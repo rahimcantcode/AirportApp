@@ -3,14 +3,18 @@ import { useApp } from '@/app/context/AppContext';
 import { PackageCheck, MapPin } from 'lucide-react';
 
 export function LoadBags() {
-  const { groundMode, selectedGate, setGroundMode, bags, updateBag, flights, showBanner } = useApp();
+  const { groundMode, selectedGate, setGroundMode, bags, passengers, updateBag, flights, showBanner } = useApp();
+  const [flightIdFilter, setFlightIdFilter] = React.useState('');
 
   const gateBags = useMemo(() => {
     if (!selectedGate) return [];
-    return bags
+    const filtered = bags
       .filter(b => b.location === 'gate' && b.gate === selectedGate && !b.securityIssue)
       .sort((a, b) => a.bagId.localeCompare(b.bagId));
-  }, [bags, selectedGate]);
+
+    if (!flightIdFilter.trim()) return filtered;
+    return filtered.filter(b => b.flightId.toUpperCase() === flightIdFilter.trim().toUpperCase());
+  }, [bags, selectedGate, flightIdFilter]);
 
   const selectedFlight = useMemo(() => {
     if (!selectedGate) return null;
@@ -22,6 +26,11 @@ export function LoadBags() {
     if (!bag) return;
     if (!selectedGate || bag.gate !== selectedGate) {
       showBanner('You can only load bags for your selected gate', 'error');
+      return;
+    }
+    const passenger = passengers.find((p) => p.ticketNumber === bag.ticketNumber);
+    if (!passenger || passenger.status !== 'boarded') {
+      showBanner('Cannot load bag until passenger is boarded', 'error');
       return;
     }
     updateBag({ ...bag, location: 'loaded', locationDetail: `Loaded at ${selectedGate}` });
@@ -74,6 +83,15 @@ export function LoadBags() {
           {selectedFlight && (
             <span className="text-sm text-gray-600">• Flight {selectedFlight.airlineCode} {selectedFlight.flightNumber} to {selectedFlight.destination}</span>
           )}
+        </div>
+        <div className="mt-4">
+          <label className="text-xs text-gray-600">Optional flight ID filter</label>
+          <input
+            value={flightIdFilter}
+            onChange={(e) => setFlightIdFilter(e.target.value)}
+            className="mt-1 w-full sm:w-72 px-3 py-2 border rounded-lg"
+            placeholder="e.g., AA0108"
+          />
         </div>
       </div>
 

@@ -37,8 +37,8 @@ export function ManageStaff() {
     setForm({ firstName: '', lastName: '', email: '', phone: '', role: 'airline-staff', airline: 'AA' });
   };
 
-  const handleCreate = () => {
-    const creds = addStaff({
+  const handleCreate = async () => {
+    const creds = await addStaff({
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
       email: form.email.trim(),
@@ -254,7 +254,7 @@ export function ManageStaff() {
             </div>
             <div className="flex items-center justify-between mt-2">
               <span className="text-gray-600">Temporary password</span>
-              <span className="font-mono text-gray-900">{newCredentials.password}</span>
+              <span className="font-mono text-gray-900">Sent by email (simulated)</span>
             </div>
           </div>
           <div className="flex justify-end">

@@ -3,7 +3,7 @@ import { useApp } from '@/app/context/AppContext';
 import { Search, Users, CheckCircle2 } from 'lucide-react';
 
 export function BoardPassenger() {
-  const { currentUser, flights, passengers, updatePassenger, selectedGate, showBanner } = useApp();
+  const { currentUser, flights, passengers, bags, updatePassenger, selectedGate, showBanner } = useApp();
   const [ticket, setTicket] = useState('');
 
   const selectedFlight = useMemo(() => {
@@ -37,6 +37,12 @@ export function BoardPassenger() {
     if (!passenger) return;
     if (passenger.status !== 'checked-in') {
       showBanner('Passenger must be checked in before boarding', 'error');
+      return;
+    }
+    const passengerBags = bags.filter((b) => b.ticketNumber === passenger.ticketNumber);
+    const notAtGate = passengerBags.find((b) => b.location !== 'gate');
+    if (notAtGate) {
+      showBanner('All passenger bags must be at gate before boarding', 'error');
       return;
     }
     updatePassenger({ ...passenger, status: 'boarded' });
